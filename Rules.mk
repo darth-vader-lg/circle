@@ -24,8 +24,23 @@ endif
 
 -include $(CIRCLEHOME)/Config.mk
 
-RASPPI	?= 1
-PREFIX	?= arm-linux-gnueabihf-
+RASPPI	?= 2
+
+ifeq ($(OS),Windows_NT)
+	PREFIX ?= arm-none-eabi-
+	REMOVE ?= del
+	ifndef RPI-WIN-BUILD-TOOLS
+		$(error Please set building tools path in RPI-WIN-BUILD-TOOLS)
+	endif
+	PATH=$(RPI-WIN-BUILD-TOOLS);$(RPI-WIN-BUILD-TOOLS)/arm-bcm2708/gcc-linaro-arm-none-eabi-4.8-2014.04/bin;PATH
+else
+	PREFIX ?= arm-linux-gnueabihf-
+	REMOVE ?= rm -f
+	ifndef RPI-LINUX-BUILD-TOOLS
+		$(error Please set building tools path in RPI-LINUX-BUILD-TOOLS)
+	endif
+	export PATH=$(RPI-LINUX-BUILD-TOOLS)/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin:$(PATH)
+endif
 
 CC	= $(PREFIX)gcc
 CPP	= $(PREFIX)g++
@@ -44,6 +59,9 @@ CFLAGS	+= $(ARCH) -Wall -Wno-psabi -fsigned-char -fno-builtin -nostdinc -nostdli
 	   -undef -D__circle__ -DRASPPI=$(RASPPI) -I $(CIRCLEHOME)/include -I $(CIRCLEHOME)/addon -O #-DNDEBUG
 CPPFLAGS+= $(CFLAGS) -fno-exceptions -fno-rtti -std=c++0x
 
+# Uncomment this line to show mixed assembler and source code
+LSTFLAGS = #-Wa,-adhln -g 
+
 %.o: %.S
 	$(AS) $(AFLAGS) -c -o $@ $<
 
@@ -51,7 +69,7 @@ CPPFLAGS+= $(CFLAGS) -fno-exceptions -fno-rtti -std=c++0x
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 %.o: %.cpp
-	$(CPP) $(CPPFLAGS) -c -o $@ $<
+	$(CPP) $(CPPFLAGS) $(LSTFLAGS) -c -o $@ $<
 
 clean:
-	rm -f *.o *.a *.elf *.lst *.img *.cir *.map *~ $(EXTRACLEAN)
+	$(REMOVE) *.o *.a *.elf *.lst *.img *.cir *.map *~ $(EXTRACLEAN)

@@ -81,3 +81,10 @@ $RECYCLE.BIN/
 *.lst
 *.map
 Config.mk
+# Visual Studio
+Debug
+Release
+obj
+*.sdf
+*.suo
+*.opensdf
